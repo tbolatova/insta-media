@@ -173,6 +173,80 @@ def walk(ph, amp=26):
                 la1=a * 0.8, la2=a * 0.8 - 10, ra1=-a * 0.8, ra2=-a * 0.8 + 10)
 
 
+SUIT = (40, 46, 62)
+SUIT_D = (26, 30, 42)
+TIE = (42, 78, 145)
+M_SKIN = (238, 203, 172)
+M_HAIR = (52, 36, 28)
+
+def boss(c, x, hip_y, s=1.0, pose=None, face="sad", tilt=0):
+    """Бизнесмен по фото: тёмно-синий костюм, белая рубашка, синий галстук, тёмные волосы, щетина."""
+    p = dict(STAND); p.update(pose or {})
+    hip = (x, hip_y)
+    sh = (x + tilt * 0.3 * s, hip_y - 74 * s)
+    hr = 26 * s
+    hc = (sh[0] + tilt * 0.35 * s, sh[1] - hr - 8 * s)
+    # пиджак
+    c.poly([(sh[0] - 27 * s, sh[1] - 2 * s), (sh[0] + 27 * s, sh[1] - 2 * s), (hip[0] + 24 * s, hip[1] + 6 * s),
+            (hip[0] - 24 * s, hip[1] + 6 * s)], fill=SUIT)
+    # рубашка + галстук
+    c.poly([(sh[0] - 11 * s, sh[1] - 3 * s), (sh[0] + 11 * s, sh[1] - 3 * s), (sh[0] + 2 * s, sh[1] + 48 * s),
+            (sh[0] - 2 * s, sh[1] + 48 * s)], fill=(255, 255, 255))
+    c.poly([(sh[0] - 4 * s, sh[1] + 1 * s), (sh[0] + 4 * s, sh[1] + 1 * s), (sh[0] + 5 * s, sh[1] + 40 * s),
+            (sh[0], sh[1] + 47 * s), (sh[0] - 5 * s, sh[1] + 40 * s)], fill=TIE)
+    c.rect(sh[0] - 4.5 * s, sh[1] - 1 * s, sh[0] + 4.5 * s, sh[1] + 6 * s, fill=(30, 58, 115), r=2 * s)
+    # лацканы
+    for d in (-1, 1):
+        c.seg((sh[0] + d * 11 * s, sh[1] - 2 * s), (sh[0] + d * 2.5 * s, sh[1] + 48 * s), SUIT_D, 2.5 * s)
+        c.seg((sh[0] + d * 11 * s, sh[1] - 2 * s), (sh[0] + d * 17 * s, sh[1] + 16 * s), SUIT_D, 2 * s)
+    c.circle(sh[0] + 3 * s, sh[1] + 58 * s, 2 * s, fill=SUIT_D)
+    # шея и воротник
+    c.rect(hc[0] - 7 * s, hc[1] + hr * 0.6, hc[0] + 7 * s, sh[1], fill=M_SKIN)
+    for d in (-1, 1):
+        c.poly([(sh[0], sh[1] + 2 * s), (sh[0] + d * 10 * s, sh[1] - 6 * s), (sh[0] + d * 11 * s, sh[1] + 3 * s)],
+               fill=(245, 245, 248))
+    # руки
+    hands = []
+    for side, a1, a2 in ((-1, p["la1"], p["la2"]), (1, p["ra1"], p["ra2"])):
+        so = (sh[0] + side * 22 * s, sh[1] + 4 * s)
+        e = limb(so, a1, 36 * s); hnd = limb(e, a2, 33 * s)
+        c.seg(so, e, SUIT_D, 16 * s); c.seg(so, e, SUIT, 13 * s)
+        c.seg(e, hnd, SUIT_D, 15 * s); c.seg(e, hnd, SUIT, 12 * s)
+        c.circle(hnd[0], hnd[1], 6.5 * s, fill=(255, 255, 255))  # манжета
+        c.circle(hnd[0] + (hnd[0] - e[0]) * 0.12, hnd[1] + (hnd[1] - e[1]) * 0.12, 6.5 * s, fill=M_SKIN,
+                 outline=(200, 160, 130), w=1)
+        hands.append(hnd)
+    # голова
+    fx, fy = hc
+    for d in (-1, 1):  # уши
+        c.ellipse(fx + d * hr * 0.88 - 5 * s, fy - 3 * s, fx + d * hr * 0.88 + 5 * s, fy + 9 * s, fill=M_SKIN)
+    c.ellipse(fx - hr * 0.88, fy - hr * 0.95, fx + hr * 0.88, fy + hr * 1.05, fill=M_SKIN)
+    # щетина
+    c.d.chord(c.S(fx - hr * 0.88, fy - hr * 0.95, fx + hr * 0.88, fy + hr * 1.05), 28, 152, fill=(214, 180, 152))
+    c.ellipse(fx - 9 * s, fy + 6 * s, fx + 9 * s, fy + 12 * s, fill=(205, 168, 140))  # усы
+    # волосы — объёмная укладка
+    c.d.chord(c.S(fx - hr * 0.95, fy - hr * 1.15, fx + hr * 0.95, fy + hr * 0.05), 180, 360, fill=M_HAIR)
+    for ox, oy, r in ((-0.45, -0.95, 0.36), (0.1, -1.1, 0.4), (0.55, -0.95, 0.33), (0.86, -0.45, 0.16), (-0.86, -0.45, 0.16)):
+        c.circle(fx + ox * hr, fy + oy * hr, r * hr, fill=M_HAIR)
+    c.poly([(fx - hr * 0.3, fy - hr * 0.8), (fx + hr * 0.75, fy - hr * 0.7), (fx + hr * 0.2, fy - hr * 0.55)], fill=M_HAIR)
+    # лицо
+    ey = fy + 1 * s
+    if face == "panic":
+        for d in (-1, 1):
+            ex = fx + d * 9 * s
+            c.circle(ex, ey, 5 * s, fill=(255, 255, 255), outline=(40, 30, 25), w=1.5 * s)
+            c.circle(ex, ey, 2 * s, fill=(40, 30, 25))
+            c.seg((ex - d * 6 * s, ey - 11 * s), (ex + d * 5 * s, ey - 7 * s), M_HAIR, 2.6 * s)
+        c.ellipse(fx - 6 * s, fy + 13 * s, fx + 6 * s, fy + 21 * s, fill=(120, 40, 40))
+    else:
+        for d in (-1, 1):
+            ex = fx + d * 9 * s
+            c.ellipse(ex - 3.5 * s, ey - 2.5 * s, ex + 3.5 * s, ey + 3 * s, fill=(40, 30, 25))
+            c.seg((ex - d * 5 * s, ey - 10 * s), (ex + d * 5 * s, ey - 7 * s), M_HAIR, 2.6 * s)
+        c.arc(fx, fy + 24 * s, 8 * s, 220, 320, (120, 50, 50), 2.6 * s)
+    return dict(head=hc, hr=hr, hands=hands, hip=hip, sh=sh)
+
+
 # ---------------- ВЕРХ: бизнесмен в операционке ----------------
 EMPL = [  # время, откуда x, куда x, hip_y, масштаб, вопрос, позиция пузыря
     (0.6, -120, 135, 830, 1.05, "Шеф, где счёт?", (205, 450)),
@@ -223,7 +297,7 @@ def top(c, t):
     else:  # хватается за голову
         pose = dict(la1=-150, la2=118, ra1=150, ra2=-118)
     face = "sad" if t < 5 else "panic"
-    b = stick(c, bx, 780, 1.32, pose, INK, face=face, tilt=look, tie=True, legs=False)
+    b = boss(c, bx, 790, 1.4, pose, face=face, tilt=look)
     c.rect(345, 760, 735, 790, fill=(120, 80, 55), r=6)
     c.rect(365, 790, 715, 905, fill=(150, 104, 72), r=4)
     # бумаги на столе — растут
