@@ -266,6 +266,78 @@ def top(c, t):
                fill=(255, 245, 160) if "СРОЧНО" in q else (255, 255, 255))
 
 
+SKIN = (247, 222, 204)
+HAIR_L = (203, 166, 114)
+HAIR_D = (146, 108, 72)
+JEANS = (62, 64, 72)
+
+def girl(c, x, hip_y, s=1.0, pose=None):
+    """Я по фото: длинные светло-русые волосы, белый лонгслив, кулон, тёмные широкие джинсы."""
+    p = dict(STAND); p.update(pose or {})
+    hip = (x, hip_y)
+    sh = (x, hip_y - 72 * s)
+    hr = 27 * s
+    hc = (x, sh[1] - hr - 5 * s)
+    # волосы сзади
+    c.circle(hc[0], hc[1] - 2 * s, hr * 1.14, fill=HAIR_L)
+    c.poly([(hc[0] - hr * 1.14, hc[1]), (hc[0] - hr * 1.3, sh[1] + 62 * s), (hc[0] - hr * 0.9, sh[1] + 72 * s),
+            (hc[0] + hr * 0.9, sh[1] + 72 * s), (hc[0] + hr * 1.3, sh[1] + 62 * s), (hc[0] + hr * 1.14, hc[1])],
+           fill=HAIR_L)
+    # ноги — широкие джинсы
+    for dx, a1, a2 in ((-8, p["ll1"], p["ll2"]), (8, p["rl1"], p["rl2"])):
+        h0 = (hip[0] + dx * s, hip[1])
+        k = limb(h0, a1, 42 * s); f = limb(k, a2, 42 * s)
+        c.seg(h0, k, JEANS, 21 * s); c.seg(k, f, JEANS, 24 * s)
+        c.ellipse(f[0] - 13 * s, f[1] + 4 * s, f[0] + 15 * s, f[1] + 15 * s, fill=(235, 235, 238))
+    # пояс джинсов + полоска живота
+    c.rect(hip[0] - 19 * s, hip[1] - 9 * s, hip[0] + 19 * s, hip[1] + 8 * s, fill=JEANS, r=5 * s)
+    c.rect(hip[0] - 16 * s, hip[1] - 14 * s, hip[0] + 16 * s, hip[1] - 8 * s, fill=SKIN)
+    # белый лонгслив
+    c.poly([(sh[0] - 19 * s, sh[1] - 1 * s), (sh[0] + 19 * s, sh[1] - 1 * s), (hip[0] + 17 * s, hip[1] - 13 * s),
+            (hip[0] - 17 * s, hip[1] - 13 * s)], fill=(255, 255, 255), outline=(190, 190, 198))
+    for i in range(3):  # складки ткани
+        yy = sh[1] + (30 + i * 11) * s
+        c.arc(sh[0], yy - 14 * s, 15 * s, 60, 120, (215, 215, 222), 1.5 * s)
+    # шея и вырез
+    c.rect(sh[0] - 6 * s, hc[1] + hr * 0.6, sh[0] + 6 * s, sh[1] + 3 * s, fill=SKIN)
+    c.rect(sh[0] - 15 * s, sh[1] - 1 * s, sh[0] + 15 * s, sh[1] + 9 * s, fill=SKIN, r=3 * s)
+    c.arc(sh[0], sh[1] - 4 * s, 11 * s, 30, 150, (200, 200, 205), 1.2 * s)  # цепочка
+    c.rect(sh[0] - 3 * s, sh[1] + 6 * s, sh[0] + 3 * s, sh[1] + 12 * s, fill=(250, 250, 250),
+           outline=(170, 170, 175), w=1)
+    # руки в рукавах
+    hands = []
+    for side, a1, a2 in ((-1, p["la1"], p["la2"]), (1, p["ra1"], p["ra2"])):
+        so = (sh[0] + side * 15 * s, sh[1] + 5 * s)
+        e = limb(so, a1, 35 * s); hnd = limb(e, a2, 32 * s)
+        for col, ww in (((190, 190, 198), 15 * s), ((255, 255, 255), 12 * s)):
+            c.seg(so, e, col, ww); c.seg(e, hnd, col, ww)
+        c.circle(hnd[0], hnd[1], 6.5 * s, fill=SKIN, outline=(215, 180, 160), w=1)
+        hands.append(hnd)
+    # лицо
+    fx, fy = hc
+    c.ellipse(fx - hr * 0.86, fy - hr * 0.95, fx + hr * 0.86, fy + hr * 1.0, fill=SKIN)
+    for d in (-1, 1):
+        ex, ey = fx + d * 10 * s, fy + 3 * s
+        c.d.chord(c.S(ex - 6 * s, ey - 4 * s, ex + 6 * s, ey + 4 * s), 180, 360, fill=(45, 32, 28))
+        c.ellipse(ex - 4 * s, ey - 3.5 * s, ex + 4 * s, ey + 2.5 * s, fill=(45, 32, 28))
+        c.circle(ex + 1.5 * s, ey - 1.5 * s, 1.2 * s, fill=(255, 255, 255))
+        c.seg((ex - 6 * s * d * -1, ey - 2 * s), (ex + 7.5 * s * d, ey - 4.5 * s), (35, 25, 22), 1.8 * s)  # стрелка
+        c.arc(ex, ey - 4 * s, 7 * s, 215, 325, (120, 88, 62), 2 * s)  # бровь
+        c.ellipse(fx + d * 15 * s - 5 * s, fy + 10 * s, fx + d * 15 * s + 5 * s, fy + 14 * s, fill=(246, 196, 190))
+    c.arc(fx, fy + 9 * s, 6 * s, 50, 130, (205, 110, 120), 2.6 * s)  # улыбка
+    # чёлка-пробор и пряди спереди
+    c.d.chord(c.S(fx - hr * 1.05, fy - hr * 1.15, fx + hr * 1.05, fy + hr * 0.85), 195, 345, fill=HAIR_D)
+    c.poly([(fx - hr * 0.2, fy - hr * 0.95), (fx - hr * 0.95, fy - hr * 0.55), (fx - hr * 0.78, fy + hr * 0.1)],
+           fill=HAIR_L)
+    for d in (-1, 1):
+        c.poly([(fx + d * hr * 0.92, fy - hr * 0.55), (fx + d * hr * 0.72, fy + hr * 0.2),
+                (fx + d * hr * 0.62, sh[1] + 10 * s), (fx + d * hr * 0.55, sh[1] + 58 * s),
+                (fx + d * hr * 0.95, sh[1] + 64 * s), (fx + d * hr * 1.25, sh[1] + 50 * s),
+                (fx + d * hr * 1.18, fy + hr * 0.1)], fill=HAIR_L)
+        c.seg((fx + d * hr * 0.88, fy + hr * 0.3), (fx + d * hr * 0.85, sh[1] + 50 * s), (185, 148, 98), 1.6 * s)
+    return dict(head=hc, hr=hr, hands=hands, hip=hip, sh=sh)
+
+
 # ---------------- НИЗ: я + Claude ----------------
 TASKS = ["Контент-план на месяц", "Ответы клиентам: 27", "Отчёт по продажам", "5 сценариев Reels"]
 TASK_T = [7.0, 8.4, 9.8, 11.2]
@@ -327,7 +399,7 @@ def bottom(c, t):
         if t > 13.0:
             mp.update(la1=-60, la2=-170)  # «класс!» рукой вверх
     hip_y = lerp(floor - 88, floor - 80, sit)
-    me = stick(c, mx, hip_y, 1.15, mp, INK, face="smile", hair=True)
+    me = girl(c, mx, hip_y, 1.15, mp)
     c.text(mx, floor + 30, "Я", 26, INK)
     if t > 5.4:  # чашка кофе
         hx, hy = me["hands"][1]
