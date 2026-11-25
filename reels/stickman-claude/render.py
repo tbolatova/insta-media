@@ -418,6 +418,60 @@ def girl(c, x, hip_y, s=1.0, pose=None, wink=False, thumb=False):
     return dict(head=hc, hr=hr, hands=hands, hip=hip, sh=sh)
 
 
+OR = (250, 150, 70)
+OR_D = (226, 118, 45)
+OR_L = (255, 190, 128)
+BOW = (248, 160, 182)
+BOW_D = (236, 128, 158)
+
+def cube(c, x, floor_y, S=140, t=0.0, mode="stand"):
+    """Мой Claude: оранжевый кубик с розовым бантиком."""
+    ph = t * 14
+    bob = -abs(math.sin(ph)) * 8 if mode == "walk" else math.sin(t * 3) * 2
+    top = floor_y - S * 0.14 - S + bob
+    x0, x1 = x - S / 2, x + S / 2
+    # ножки
+    for d in (-1, 1):
+        lift = max(0, math.sin(ph) * d) * 10 if mode == "walk" else 0
+        c.rect(x + d * S * 0.2 - S * 0.12, floor_y - S * 0.2 - lift, x + d * S * 0.2 + S * 0.12, floor_y - lift,
+               fill=OR_D, r=S * 0.07)
+    # ручки
+    arms = {}
+    for d in (-1, 1):
+        ax, ay = x + d * (S * 0.53), top + S * 0.55
+        if mode == "walk":
+            ay += math.sin(ph) * d * 6
+        if mode == "wave" and d == 1:
+            ax, ay = x + S * 0.56, top + S * 0.12 + math.sin(t * 12) * 6
+        if mode == "type":
+            ax, ay = x + d * S * 0.5 + (S * 0.12 if d == 1 else 0), top + S * 0.5 + math.sin(t * 22 + d) * 7
+        arms[d] = (ax, ay)
+        c.ellipse(ax - S * 0.11, ay - S * 0.08, ax + S * 0.11, ay + S * 0.08, fill=OR_D)
+        c.ellipse(ax - S * 0.09, ay - S * 0.075, ax + S * 0.09, ay + S * 0.06, fill=OR)
+    # тело с объёмом
+    c.rect(x0, top, x1, top + S, fill=OR_D, r=S * 0.24)
+    c.rect(x0 + S * 0.02, top, x1 - S * 0.02, top + S * 0.93, fill=OR, r=S * 0.22)
+    c.ellipse(x0 + S * 0.12, top + S * 0.06, x0 + S * 0.5, top + S * 0.22, fill=OR_L)
+    # глаза
+    for d in (-1, 1):
+        ex, ey = x + d * S * 0.17, top + S * 0.5
+        if mode == "wave" and int(t * 3) % 4 == 0:
+            c.arc(ex, ey + S * 0.03, S * 0.06, 200, 340, (30, 25, 25), S * 0.03)
+        else:
+            c.ellipse(ex - S * 0.055, ey - S * 0.075, ex + S * 0.055, ey + S * 0.075, fill=(30, 25, 25))
+            c.circle(ex + S * 0.015, ey - S * 0.03, S * 0.018, fill=(255, 255, 255))
+        c.ellipse(ex + d * S * 0.06 - S * 0.05, ey + S * 0.09, ex + d * S * 0.06 + S * 0.05, ey + S * 0.13,
+                  fill=(255, 150, 120))
+    # бантик
+    bx, by = x, top + S * 0.02
+    for d in (-1, 1):
+        c.poly([(bx, by), (bx + d * S * 0.22, by - S * 0.12), (bx + d * S * 0.25, by + S * 0.02),
+                (bx + d * S * 0.2, by + S * 0.1)], fill=BOW)
+        c.ellipse(bx + d * S * 0.12 - S * 0.11, by - S * 0.1, bx + d * S * 0.12 + S * 0.11, by + S * 0.09, fill=BOW)
+    c.ellipse(bx - S * 0.06, by - S * 0.06, bx + S * 0.06, by + S * 0.06, fill=BOW_D)
+    return dict(head=(x, top + S / 2), hr=S / 2, hands=[arms[-1], arms[1]])
+
+
 # ---------------- НИЗ: я + Claude ----------------
 TASKS = ["Контент-план на месяц", "Ответы клиентам: 27", "Отчёт по продажам", "5 сценариев Reels"]
 TASK_T = [7.0, 8.4, 9.8, 11.2]
@@ -436,29 +490,32 @@ def bottom(c, t):
     c.rect(cx_chair - 95, floor - 210, cx_chair - 60, floor - 2, fill=(110, 150, 200), r=12)  # спинка
     c.rect(cx_chair - 95, floor - 75, cx_chair + 115, floor - 35, fill=(130, 170, 220), r=12)  # сиденье
     c.rect(cx_chair + 100, floor - 105, cx_chair + 130, floor - 2, fill=(110, 150, 200), r=10)  # подлокотник
-    # столик Claude
-    c.rect(700, floor - 150, 990, floor - 132, fill=(120, 80, 55), r=5)
-    c.rect(720, floor - 132, 738, floor, fill=(120, 80, 55)); c.rect(952, floor - 132, 970, floor, fill=(120, 80, 55))
-    c.poly([(790, floor - 150), (880, floor - 150), (905, floor - 215), (815, floor - 215)], fill=(60, 60, 70))
+    # столик Claude (низкий, под рост кубика)
+    dt = floor - 95
+    c.rect(740, dt, 990, dt + 16, fill=(120, 80, 55), r=5)
+    c.rect(760, dt + 16, 776, floor, fill=(120, 80, 55)); c.rect(952, dt + 16, 968, floor, fill=(120, 80, 55))
+    c.poly([(780, dt), (880, dt), (905, dt - 70), (805, dt - 70)], fill=(60, 60, 70))
     screen_on = t > 5.0
-    c.poly([(800, floor - 155), (875, floor - 155), (897, floor - 208), (822, floor - 208)],
+    c.poly([(790, dt - 5), (875, dt - 5), (896, dt - 64), (811, dt - 64)],
            fill=(140, 220, 170) if screen_on else (90, 90, 100))
+    if screen_on:  # строки «печатаются»
+        for r_ in range(3):
+            ln = 0.3 + 0.6 * ((t * 1.7 + r_ * 0.37) % 1)
+            yy = dt - 50 + r_ * 14
+            c.seg((818 - r_ * 3, yy), (818 - r_ * 3 + 55 * ln, yy), (40, 120, 80), 3)
 
     # --- Claude ---
     ck = prog(t, 3.9, 5.0)
-    cx = lerp(640, 735, ck)
+    cx = lerp(640, 700, ck)
     if 3.9 < t < 5.0:
-        cp = walk((t - 3.9) * 14, 22)
+        mode = "walk"
     elif t <= 3.9:
-        cp = dict(STAND)
-        if t > 3.0:  # «принято» — рука вверх
-            cp.update(ra1=135, ra2=170)
+        mode = "wave" if t > 3.0 else "stand"
     elif t < 13.0:
-        ty = math.sin(t * 22)
-        cp = dict(STAND, la1=55, la2=95 + 10 * ty, ra1=65, ra2=100 - 10 * ty)
+        mode = "type"
     else:
-        cp = dict(STAND, ra1=135, ra2=170)
-    ch = stick(c, cx, floor - 88, 1.15, cp, CLAUDE, face="smile", bow=True, skirt=True)
+        mode = "wave"
+    ch = cube(c, cx, floor + 5, 140, t, mode)
     c.text(cx, floor + 30, "Claude", 26, CLAUDE)
 
     # --- я ---
