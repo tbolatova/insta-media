@@ -4,7 +4,7 @@
 import math, subprocess, sys, os
 from PIL import Image, ImageDraw, ImageFont
 
-W, H, FPS, DUR = 1080, 1920, 30, 15.0
+W, H, FPS, DUR = 1080, 1920, 30, 17.0
 SS = 2  # суперсэмплинг для сглаживания
 FONT_R = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
 FONT_B = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
@@ -271,7 +271,7 @@ HAIR_L = (203, 166, 114)
 HAIR_D = (146, 108, 72)
 JEANS = (62, 64, 72)
 
-def girl(c, x, hip_y, s=1.0, pose=None):
+def girl(c, x, hip_y, s=1.0, pose=None, wink=False, thumb=False):
     """Я по фото: длинные светло-русые волосы, белый лонгслив, кулон, тёмные широкие джинсы."""
     p = dict(STAND); p.update(pose or {})
     hip = (x, hip_y)
@@ -301,7 +301,7 @@ def girl(c, x, hip_y, s=1.0, pose=None):
     # шея и вырез
     c.rect(sh[0] - 6 * s, hc[1] + hr * 0.6, sh[0] + 6 * s, sh[1] + 3 * s, fill=SKIN)
     c.rect(sh[0] - 15 * s, sh[1] - 1 * s, sh[0] + 15 * s, sh[1] + 9 * s, fill=SKIN, r=3 * s)
-    c.arc(sh[0], sh[1] - 4 * s, 11 * s, 30, 150, (200, 200, 205), 1.2 * s)  # цепочка
+    c.arc(sh[0], sh[1] - 4 * s, 11 * s, 30, 150, (205, 205, 210), 0.6 * s)  # цепочка
     c.rect(sh[0] - 3 * s, sh[1] + 6 * s, sh[0] + 3 * s, sh[1] + 12 * s, fill=(250, 250, 250),
            outline=(170, 170, 175), w=1)
     # руки в рукавах
@@ -311,6 +311,9 @@ def girl(c, x, hip_y, s=1.0, pose=None):
         e = limb(so, a1, 35 * s); hnd = limb(e, a2, 32 * s)
         for col, ww in (((190, 190, 198), 15 * s), ((255, 255, 255), 12 * s)):
             c.seg(so, e, col, ww); c.seg(e, hnd, col, ww)
+        if thumb and side == 1:  # большой палец вверх
+            c.rect(hnd[0] - 2.5 * s, hnd[1] - 13 * s, hnd[0] + 2.5 * s, hnd[1], fill=SKIN, r=2.5 * s,
+                   outline=(215, 180, 160), w=1)
         c.circle(hnd[0], hnd[1], 6.5 * s, fill=SKIN, outline=(215, 180, 160), w=1)
         hands.append(hnd)
     # лицо
@@ -318,10 +321,13 @@ def girl(c, x, hip_y, s=1.0, pose=None):
     c.ellipse(fx - hr * 0.86, fy - hr * 0.95, fx + hr * 0.86, fy + hr * 1.0, fill=SKIN)
     for d in (-1, 1):
         ex, ey = fx + d * 10 * s, fy + 3 * s
-        c.d.chord(c.S(ex - 6 * s, ey - 4 * s, ex + 6 * s, ey + 4 * s), 180, 360, fill=(45, 32, 28))
-        c.ellipse(ex - 4 * s, ey - 3.5 * s, ex + 4 * s, ey + 2.5 * s, fill=(45, 32, 28))
-        c.circle(ex + 1.5 * s, ey - 1.5 * s, 1.2 * s, fill=(255, 255, 255))
-        c.seg((ex - 6 * s * d * -1, ey - 2 * s), (ex + 7.5 * s * d, ey - 4.5 * s), (35, 25, 22), 1.8 * s)  # стрелка
+        if wink and d == 1:  # подмигивание
+            c.arc(ex, ey - 4 * s, 6 * s, 30, 150, (45, 32, 28), 2.4 * s)
+        else:
+            c.d.chord(c.S(ex - 6 * s, ey - 4 * s, ex + 6 * s, ey + 4 * s), 180, 360, fill=(45, 32, 28))
+            c.ellipse(ex - 4 * s, ey - 3.5 * s, ex + 4 * s, ey + 2.5 * s, fill=(45, 32, 28))
+            c.circle(ex + 1.5 * s, ey - 1.5 * s, 1.2 * s, fill=(255, 255, 255))
+            c.seg((ex - 6 * s * d * -1, ey - 2 * s), (ex + 7.5 * s * d, ey - 4.5 * s), (35, 25, 22), 1.8 * s)  # стрелка
         c.arc(ex, ey - 4 * s, 7 * s, 215, 325, (120, 88, 62), 2 * s)  # бровь
         c.ellipse(fx + d * 15 * s - 5 * s, fy + 10 * s, fx + d * 15 * s + 5 * s, fy + 14 * s, fill=(246, 196, 190))
     c.arc(fx, fy + 9 * s, 6 * s, 50, 130, (205, 110, 120), 2.6 * s)  # улыбка
@@ -353,9 +359,9 @@ def bottom(c, t):
 
     # мебель
     cx_chair = 205
-    c.rect(cx_chair - 95, floor - 150, cx_chair - 60, floor - 2, fill=(110, 150, 200), r=12)  # спинка
-    c.rect(cx_chair - 95, floor - 75, cx_chair + 75, floor - 35, fill=(130, 170, 220), r=12)  # сиденье
-    c.rect(cx_chair + 55, floor - 105, cx_chair + 85, floor - 2, fill=(110, 150, 200), r=10)  # подлокотник
+    c.rect(cx_chair - 95, floor - 210, cx_chair - 60, floor - 2, fill=(110, 150, 200), r=12)  # спинка
+    c.rect(cx_chair - 95, floor - 75, cx_chair + 115, floor - 35, fill=(130, 170, 220), r=12)  # сиденье
+    c.rect(cx_chair + 100, floor - 105, cx_chair + 130, floor - 2, fill=(110, 150, 200), r=10)  # подлокотник
     # столик Claude
     c.rect(700, floor - 150, 990, floor - 132, fill=(120, 80, 55), r=5)
     c.rect(720, floor - 132, 738, floor, fill=(120, 80, 55)); c.rect(952, floor - 132, 970, floor, fill=(120, 80, 55))
@@ -398,8 +404,8 @@ def bottom(c, t):
                   ll1=lerp(-9, 90, sit), ll2=lerp(-9, 0, sit), rl1=lerp(9, 80, sit), rl2=lerp(9, 5, sit))
         if t > 13.0:
             mp.update(la1=-60, la2=-170)  # «класс!» рукой вверх
-    hip_y = lerp(floor - 88, floor - 80, sit)
-    me = girl(c, mx, hip_y, 1.15, mp)
+    hip_y = lerp(floor - 120, floor - 78, sit)
+    me = girl(c, mx, hip_y, 1.5, mp)
     c.text(mx, floor + 30, "Я", 26, INK)
     if t > 5.4:  # чашка кофе
         hx, hy = me["hands"][1]
@@ -410,14 +416,14 @@ def bottom(c, t):
 
     # реплики
     k1 = pop(t, 0.5) * (1 - prog(t, 3.0, 3.25))
-    bubble(c, 400, Y + 300,
+    bubble(c, 400, Y + 235,
            "Claude, сделай контент-план,\nответь клиентам\nи собери отчёт", k1,
            tail=(me["head"][0] + 10, me["head"][1] - me["hr"] - 4), size=27)
     k2 = pop(t, 3.1) * (1 - prog(t, 4.6, 4.9))
     bubble(c, 760, Y + 320, "Принято ✓", k2, tail=(ch["head"][0], ch["head"][1] - ch["hr"]), size=30)
     for (a, b_, s) in THOUGHTS:
         k = pop(t, a) * (1 - prog(t, b_ - 0.25, b_))
-        bubble(c, 230, Y + 320, s, k, tail=(me["head"][0] + 5, me["head"][1] - me["hr"]), size=28,
+        bubble(c, 230, Y + 255, s, k, tail=(me["head"][0] + 5, me["head"][1] - me["hr"]), size=28,
                think=True, fill=(255, 250, 235))
     # чек-лист Claude
     if t > 5.6:
@@ -447,7 +453,30 @@ def bottom(c, t):
            tail=(ch["head"][0] - ch["hr"], ch["head"][1]), size=28, fill=(255, 238, 230), border=CLAUDE)
 
 
+def closeup(t):
+    """Финал: я крупно, подмигиваю и показываю «класс»."""
+    c = C()
+    c.rect(0, 0, W, H, fill=(232, 246, 238))
+    for i, (x, y, r) in enumerate(((150, 620, 90), (950, 560, 60), (120, 1500, 70), (960, 1380, 110))):
+        c.circle(x, y + 10 * math.sin(t * 2 + i), r, fill=(214, 236, 223))
+    k = pop(t, 15.0, 0.5)
+    sc = lerp(5.0, 7.0, k)
+    hip = 920 + 104 * sc
+    g = girl(c, 540, hip, sc, dict(la1=-12, la2=-6, ra1=lerp(20, 38, k), ra2=lerp(10, 176, k)),
+             wink=15.7 < t < 16.35, thumb=k > 0.8)
+    tk = pop(t, 15.25, 0.4)
+    if tk > 0.05:
+        c.text(W / 2, 330, "Хочешь так же?", 76 * tk, INK)
+        c.text(W / 2, 430, "Внедряю ИИ в бизнес под ключ", 40 * tk, GREEN)
+    img = c.im.resize((W, H), Image.LANCZOS)
+    if t < 15.35:
+        img = Image.blend(frame(14.999), img, (t - 15.0) / 0.35)
+    return img
+
+
 def frame(t):
+    if t >= 15.0:
+        return closeup(t)
     c = C()
     top(c, t)
     bottom(c, t)
